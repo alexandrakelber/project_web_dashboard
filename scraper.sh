@@ -1,0 +1,1 @@
+curl -s "https://api.openweathermap.org/data/2.5/weather?q=London&appid=e3de4a3649f43d096433bbcd70d28644&units=metric"
