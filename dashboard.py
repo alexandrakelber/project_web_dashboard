@@ -2,6 +2,7 @@ import dash
 from dash import dcc, html
 import pandas as pd
 import plotly.express as px
+from dash.dependencies import Input, Output
 
 # Charger les données scrappées
 def load_data():
@@ -22,14 +23,14 @@ def create_figure():
 app.layout = html.Div([
     html.H1("Weather Dashboard"),
     html.Div([
-        html.P(f"Temperature: {data['temp'].iloc[-1]} °C"),
-        html.P(f"Feels Like: {data['feels_like'].iloc[-1]} °C"),
-        html.P(f"Humidity: {data['humidity'].iloc[-1]}%"),
-        html.P(f"Pressure: {data['pressure'].iloc[-1]} hPa"),
-        html.P(f"Wind Speed: {data['wind_speed'].iloc[-1]} m/s"),
-        html.P(f"Weather: {data['weather_desc'].iloc[-1]}"),
+        html.P(id="temp-display"),
+        html.P(id="feels-like-display"),
+        html.P(id="humidity-display"),
+        html.P(id="pressure-display"),
+        html.P(id="wind-speed-display"),
+        html.P(id="weather-display"),
     ]),
-    dcc.Graph(id='temp-graph', figure=create_figure()),  # Graph id changé ici
+    dcc.Graph(id='temp-graph'),
     dcc.Interval(
         id='interval-component',
         interval=5*60*1000,  # Interval de 5 minutes
@@ -37,7 +38,36 @@ app.layout = html.Div([
     )  # Ajout de l'interval pour rafraîchir toutes les 5 minutes
 ])
 
+# Callback pour mettre à jour les éléments du dashboard
+@app.callback(
+    [Output('temp-display', 'children'),
+     Output('feels-like-display', 'children'),
+     Output('humidity-display', 'children'),
+     Output('pressure-display', 'children'),
+     Output('wind-speed-display', 'children'),
+     Output('weather-display', 'children'),
+     Output('temp-graph', 'figure')],
+    [Input('interval-component', 'n_intervals')]
+)
+def update_dashboard(n_intervals):
+    # Charger les données chaque fois que la fonction est appelée
+    data = load_data()
+
+    # Créer les éléments du dashboard
+    temp = f"Temperature: {data['temp'].iloc[-1]} °C"
+    feels_like = f"Feels Like: {data['feels_like'].iloc[-1]} °C"
+    humidity = f"Humidity: {data['humidity'].iloc[-1]}%"
+    pressure = f"Pressure: {data['pressure'].iloc[-1]} hPa"
+    wind_speed = f"Wind Speed: {data['wind_speed'].iloc[-1]} m/s"
+    weather_desc = f"Weather: {data['weather_desc'].iloc[-1]}"
+
+    # Créer un graphique pour la température
+    fig = create_figure()
+
+    return temp, feels_like, humidity, pressure, wind_speed, weather_desc, fig
+
 # Exécuter le serveur
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8050)
+    app.run_server(debug=True)
+
 
