@@ -10,12 +10,13 @@ import os
 def load_data(city="London"):
     DATA_FILE = 'weather_data.txt'
     if not os.path.exists(DATA_FILE):
-        return pd.DataFrame()  # Retourne un DataFrame vide si le fichier n'existe pas
+        return pd.DataFrame()  # Fichier non trouvé => DataFrame vide
     try:
         data = pd.read_csv(DATA_FILE, parse_dates=['timestamp'])
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier: {e}")
         return pd.DataFrame()
+    # Filtrer sur la ville demandée
     return data[data["city"] == city]
 
 def load_daily_report():
@@ -27,59 +28,72 @@ def load_daily_report():
         return "Aucun rapport quotidien disponible."
 
 # --- Fonction de création du graphique ---
-
 def create_figure(city="London"):
     data = load_data(city)
     if data.empty:
         fig = px.line(title=f'Aucune donnée disponible pour {city}')
     else:
-        fig = px.line(data, x='timestamp', y='temp', title=f'Température au cours du temps pour {city}')
+        fig = px.line(
+            data,
+            x='timestamp',
+            y='temp',
+            title=f'Température au cours du temps pour {city}',
+            markers=True  # Affiche un point pour chaque relevé
+        )
+        # Personnalisation des axes et du layout
         fig.update_xaxes(title='Horodatage', tickformat='%H:%M\n%d-%m')
         fig.update_yaxes(title='Température (°C)')
-        fig.update_layout(margin=dict(l=40, r=40, t=60, b=40))
+        fig.update_layout(
+            margin=dict(l=40, r=40, t=60, b=40),
+            plot_bgcolor='#fafafa',
+            paper_bgcolor='#fafafa'
+        )
     return fig
 
 # --- Création de l'application Dash ---
 app = dash.Dash(__name__)
 
-app.layout = html.Div([
-    html.H1("Dashboard Météo"),
-    
-    # Sélecteur de ville
-    dcc.Dropdown(
-        id='city-dropdown',
-        options=[
-            {'label': 'London', 'value': 'London'},
-            {'label': 'New York', 'value': 'New York'},
-            {'label': 'Paris', 'value': 'Paris'},
-        ],
-        value='London',
-        clearable=False,
-    ),
-    
-    # Zone d'affichage des données en temps réel avec un spinner pendant le chargement
-    dcc.Loading(
-        id="loading-data",
-        type="default",  # Tu peux changer le type de spinner (par exemple "circle" ou "dot")
-        children=html.Div(id="data-display", style={'margin': '20px 0'})
-    ),
-    
-    # Graphique de la température
-    dcc.Graph(id='temp-graph'),
-    
-    # Affichage du rapport quotidien
-    html.Div([
-        html.H3("Rapport Quotidien"),
-        html.Div(id='daily-report')
-    ], style={'marginTop': '20px'}),
-    
-    # Interval de rafraîchissement (toutes les 5 minutes)
-    dcc.Interval(
-        id='interval-component',
-        interval=5*60*1000,  # 5 minutes en millisecondes
-        n_intervals=0
-    )
-])
+app.layout = html.Div(
+    style={'maxWidth': '800px', 'margin': '0 auto'},
+    children=[
+        html.H1("Dashboard Météo"),
+        
+        # Sélecteur de ville
+        dcc.Dropdown(
+            id='city-dropdown',
+            options=[
+                {'label': 'London', 'value': 'London'},
+                {'label': 'New York', 'value': 'New York'},
+                {'label': 'Paris', 'value': 'Paris'},
+            ],
+            value='London',
+            clearable=False,
+        ),
+        
+        # Spinner pendant le chargement
+        dcc.Loading(
+            id="loading-data",
+            type="default",
+            children=html.Div(id="data-display", style={'margin': '20px 0'})
+        ),
+        
+        # Graphique de la température
+        dcc.Graph(id='temp-graph'),
+        
+        # Affichage du rapport quotidien
+        html.Div([
+            html.H3("Rapport Quotidien"),
+            html.Div(id='daily-report')
+        ], style={'marginTop': '20px'}),
+        
+        # Interval de rafraîchissement (toutes les 5 minutes)
+        dcc.Interval(
+            id='interval-component',
+            interval=5*60*1000,
+            n_intervals=0
+        )
+    ]
+)
 
 # --- Callback pour mettre à jour le dashboard ---
 @app.callback(
@@ -90,13 +104,15 @@ app.layout = html.Div([
      Input('city-dropdown', 'value')]
 )
 def update_dashboard(n_intervals, city):
+    # 1) Charger les données de la ville sélectionnée
     data = load_data(city)
     
+    # 2) Construire la zone d'info
     if data.empty:
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
     else:
-        latest = data.iloc[-1]
+        latest = data.iloc[-1]  # Dernière ligne
         info = html.Div([
             html.P(f"Température: {latest['temp']} °C", style={'fontSize': '20px', 'color': 'blue'}),
             html.P(f"Ressenti: {latest['feels_like']} °C"),
@@ -108,11 +124,11 @@ def update_dashboard(n_intervals, city):
         ])
         fig = create_figure(city)
     
+    # 3) Charger le rapport quotidien
     daily_report = load_daily_report()
     
     return info, fig, html.Pre(daily_report)
 
 if __name__ == '__main__':
     print("Lancement du serveur Dash...")
-    app.run_server(debug=True, host='0.0.0.0', port=8053)
-
+    app.run_server(debug=True, host='0.0.0.0', port=8056)
