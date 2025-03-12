@@ -48,6 +48,7 @@ temp_min=$(echo "$response" | grep -oP '"temp_min":\s*\K[0-9.]+')
 # Horodatage en format ISO (UTC)
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+
 # --- Stockage des données ---
 DATA_FILE="weather_data.txt"
 
@@ -65,21 +66,31 @@ if [ "$mode" == "daily" ]; then
     REPORT_FILE="daily_report.txt"
     current_date=$(date -u +"%Y-%m-%d")
     
-    # Filtrer les données du jour pour la ville spécifiée (en ignorant l'en-tête)
-    daily_data=$(awk -F',' -v date="$current_date" -v city="$CITY" 'NR>1 && index($2, date)==1 && $1==city {print}' "$DATA_FILE")
+    # Filtrer les données du jour pour la ville spécifiée
+    daily_data=$(awk -F',' -v date="$current_date" -v city="$CITY" '
+        NR>1 && index($2, date)==1 && $1==city {print}
+    ' "$DATA_FILE")
     
     if [ -z "$daily_data" ]; then
         echo "Aucune donnée pour le jour ${current_date} pour ${CITY}."
         exit 0
     fi
 
-    # Calcul des métriques en utilisant la colonne 3 (température actuelle)
+    # Calcul des métriques (colonne 3 = temp)
     open_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {print $3; exit}')
     close_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {val=$3} END{print (val=="")?"N/A":val}')
-    min_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 < min) {min=$3; found=1} } END{if(found==1) print min; else print "N/A"}')
-    max_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 > max) {max=$3; found=1} } END{if(found==1) print max; else print "N/A"}')
-    avg_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {sum+=$3; count++} END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
-    avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" {sum+=$5; count++} END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
+    min_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {
+        if(found==0 || $3 < min) {min=$3; found=1}
+    } END{if(found==1) print min; else print "N/A"}')
+    max_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {
+        if(found==0 || $3 > max) {max=$3; found=1}
+    } END{if(found==1) print max; else print "N/A"}')
+    avg_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {
+        sum+=$3; count++
+    } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
+    avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" {
+        sum+=$5; count++
+    } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
     
     {
         echo "Rapport quotidien pour ${CITY} le ${current_date}:"
@@ -93,5 +104,3 @@ if [ "$mode" == "daily" ]; then
     
     echo "Rapport quotidien généré dans ${REPORT_FILE}"
 fi
-
-
