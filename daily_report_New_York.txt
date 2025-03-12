@@ -1,0 +1,7 @@
+Rapport quotidien pour New York le 2025-03-12:
+Température d'ouverture: 9.77 °C
+Température de clôture: 11.64 °C
+Température minimale: 9.77 °C
+Température maximale: 11.64 °C
+Température moyenne: 10.71 °C
+Humidité moyenne: 35.50 %

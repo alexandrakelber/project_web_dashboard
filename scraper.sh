@@ -96,3 +96,4 @@ if [ "$mode" == "daily" ]; then
     
     echo "Rapport quotidien généré dans ${REPORT_FILE}"
 fi
+

@@ -1,0 +1,8 @@
+city,timestamp,temp,feels_like,humidity,pressure,wind_speed,weather_desc,temp_max,temp_min
+Paris,2025-03-12T16:33:34Z,7.77,4.96,64,999,4.63,broken clouds,8.1,7.25
+Paris,2025-03-12T16:53:04Z,7.63,5.3,66,999,3.6,overcast clouds,8.1,6.88
+New York,2025-03-12T17:30:25Z,9.77,8.5,38,1016,2.57,overcast clouds,11.36,8.86
+London,2025-03-12T17:30:47Z,7.34,5.26,60,1002,3.09,few clouds,8.06,6.7
+London,2025-03-12T19:57:51Z,4.61,2.38,82,1002,2.57,broken clouds,5.51,3.64
+Paris,2025-03-12T19:58:43Z,6.47,3.6,72,1000,4.12,broken clouds,6.88,5.77
+New York,2025-03-12T19:58:51Z,11.64,9.72,33,1015,2.57,overcast clouds,12.97,9.97
