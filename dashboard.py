@@ -3,31 +3,49 @@ from dash import dcc, html
 import pandas as pd
 import plotly.express as px
 from dash.dependencies import Input, Output
+import os
 
-# Charger les données scrappées
+# --- Fonctions de chargement des données ---
+
 def load_data(city="London"):
-    data = pd.read_csv('weather_data.txt', header=None, names=["city", "temp", "feels_like", "humidity", "pressure", "wind_speed", "weather_desc", "temp_max", "temp_min"])
+    DATA_FILE = 'weather_data.txt'
+    if not os.path.exists(DATA_FILE):
+        return pd.DataFrame()  # Retourne un DataFrame vide si le fichier n'existe pas
+    try:
+        data = pd.read_csv(DATA_FILE, parse_dates=['timestamp'])
+    except Exception as e:
+        print(f"Erreur lors de la lecture du fichier: {e}")
+        return pd.DataFrame()
     return data[data["city"] == city]
 
-# Charger le rapport quotidien
 def load_daily_report():
-    with open('daily_report.txt', 'r') as file:
-        return file.readlines()
+    REPORT_FILE = 'daily_report.txt'
+    if os.path.exists(REPORT_FILE):
+        with open(REPORT_FILE, 'r') as file:
+            return file.read()
+    else:
+        return "Aucun rapport quotidien disponible."
 
-# Créer l'application Dash
-app = dash.Dash(__name__)
+# --- Fonction de création du graphique ---
 
-# Créer un graphique pour afficher la série temporelle des températures
 def create_figure(city="London"):
     data = load_data(city)
-    fig = px.line(data, x=data.index, y='temp', title=f'Temperature over Time in {city}')
+    if data.empty:
+        fig = px.line(title=f'Aucune donnée disponible pour {city}')
+    else:
+        fig = px.line(data, x='timestamp', y='temp', title=f'Température au cours du temps pour {city}')
+        fig.update_xaxes(title='Horodatage', tickformat='%H:%M\n%d-%m')
+        fig.update_yaxes(title='Température (°C)')
+        fig.update_layout(margin=dict(l=40, r=40, t=60, b=40))
     return fig
 
-# Définir la disposition du dashboard
-app.layout = html.Div([
-    html.H1("Weather Dashboard"),
+# --- Création de l'application Dash ---
+app = dash.Dash(__name__)
 
-    # Dropdown pour sélectionner la ville
+app.layout = html.Div([
+    html.H1("Dashboard Météo"),
+    
+    # Sélecteur de ville
     dcc.Dropdown(
         id='city-dropdown',
         options=[
@@ -36,70 +54,65 @@ app.layout = html.Div([
             {'label': 'Paris', 'value': 'Paris'},
         ],
         value='London',
+        clearable=False,
     ),
-
-    # Affichage des données en temps réel
-    html.Div([
-        html.P(id="temp-display"),
-        html.P(id="feels-like-display"),
-        html.P(id="humidity-display"),
-        html.P(id="pressure-display"),
-        html.P(id="wind-speed-display"),
-        html.P(id="weather-display"),
-    ]),
-
-    # Graphiques
+    
+    # Zone d'affichage des données en temps réel avec un spinner pendant le chargement
+    dcc.Loading(
+        id="loading-data",
+        type="default",  # Tu peux changer le type de spinner (par exemple "circle" ou "dot")
+        children=html.Div(id="data-display", style={'margin': '20px 0'})
+    ),
+    
+    # Graphique de la température
     dcc.Graph(id='temp-graph'),
-
+    
     # Affichage du rapport quotidien
     html.Div([
-        html.H3("Daily Report"),
+        html.H3("Rapport Quotidien"),
         html.Div(id='daily-report')
-    ]),
-
-    # Interval pour rafraîchir les données
+    ], style={'marginTop': '20px'}),
+    
+    # Interval de rafraîchissement (toutes les 5 minutes)
     dcc.Interval(
         id='interval-component',
-        interval=5*60*1000,  # Rafraîchissement toutes les 5 minutes
+        interval=5*60*1000,  # 5 minutes en millisecondes
         n_intervals=0
     )
 ])
 
-# Callback pour mettre à jour les éléments du dashboard
+# --- Callback pour mettre à jour le dashboard ---
 @app.callback(
-    [Output('temp-display', 'children'),
-     Output('feels-like-display', 'children'),
-     Output('humidity-display', 'children'),
-     Output('pressure-display', 'children'),
-     Output('wind-speed-display', 'children'),
-     Output('weather-display', 'children'),
+    [Output('data-display', 'children'),
      Output('temp-graph', 'figure'),
-     Output('daily-report', 'children')],  # Ajouter le rapport quotidien à l'affichage
+     Output('daily-report', 'children')],
     [Input('interval-component', 'n_intervals'),
-     Input('city-dropdown', 'value')]  # Nouvelle entrée pour la ville
+     Input('city-dropdown', 'value')]
 )
-
 def update_dashboard(n_intervals, city):
-    # Charger les données chaque fois que la fonction est appelée
     data = load_data(city)
+    
+    if data.empty:
+        info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
+        fig = create_figure(city)
+    else:
+        latest = data.iloc[-1]
+        info = html.Div([
+            html.P(f"Température: {latest['temp']} °C", style={'fontSize': '20px', 'color': 'blue'}),
+            html.P(f"Ressenti: {latest['feels_like']} °C"),
+            html.P(f"Humidité: {latest['humidity']} %"),
+            html.P(f"Pression: {latest['pressure']} hPa"),
+            html.P(f"Vitesse du vent: {latest['wind_speed']} m/s"),
+            html.P(f"Météo: {latest['weather_desc']}"),
+            html.P(f"Horodatage: {latest['timestamp']}")
+        ])
+        fig = create_figure(city)
+    
+    daily_report = load_daily_report()
+    
+    return info, fig, html.Pre(daily_report)
 
-    # Créer les éléments du dashboard
-    temp = f"Temperature: {data['temp'].iloc[-1]} °C"
-    feels_like = f"Feels Like: {data['feels_like'].iloc[-1]} °C"
-    humidity = f"Humidity: {data['humidity'].iloc[-1]}%"
-    pressure = f"Pressure: {data['pressure'].iloc[-1]} hPa"
-    wind_speed = f"Wind Speed: {data['wind_speed'].iloc[-1]} m/s"
-    weather_desc = f"Weather: {data['weather_desc'].iloc[-1]}"
-
-    # Créer un graphique pour la température
-    fig = create_figure(city)
-
-    # Charger le rapport quotidien
-    report = load_daily_report()
-
-    return temp, feels_like, humidity, pressure, wind_speed, weather_desc, fig, html.Div([html.P(line) for line in report])
-
-# Exécuter le serveur
 if __name__ == '__main__':
-    print("Dash server is running...")
-    app.run_server(debug=True, host='0.0.0.0', port=8052)
+    print("Lancement du serveur Dash...")
+    app.run_server(debug=True, host='0.0.0.0', port=8053)
+
