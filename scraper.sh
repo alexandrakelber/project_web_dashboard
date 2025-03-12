@@ -1,79 +1,97 @@
-#!/bin/bash 
+#!/bin/bash
+# scraper.sh - Récupère les données météo et génère un rapport quotidien si demandé.
 
-# Variables
-API_KEY="e3de4a3649f43d096433bbcd70d28644"
-CITY=$1  # L'utilisateur peut maintenant passer le nom de la ville comme argument
-URL="https://api.openweathermap.org/data/2.5/weather?q=${CITY// /%20}&appid=$API_KEY&units=metric"  # Remplace les espaces par %20
+# --- Détermination du mode ---
+if [ "$1" == "daily" ]; then
+    mode="daily"
+    shift  # Supprime "daily" des arguments pour que $1 soit ensuite le nom de la ville (optionnel)
+else
+    mode="scrape"
+fi
 
-# Vérifier si curl est installé
-command -v curl >/dev/null 2>&1 || { echo "curl est requis mais n'est pas installé. Arrêt du script."; exit 1; }
+# --- Paramètres ---
+CITY="${1:-London}"                         # Utilise l'argument passé en ligne de commande ou "London" par défaut
+API_KEY="e3de4a3649f43d096433bbcd70d28644"    # Clé API OpenWeatherMap
+BASE_URL="https://api.openweathermap.org/data/2.5/weather"
+UNITS="metric"                              # Pour avoir les températures en °C
 
-# Récupérer les données météo via curl
+# Construction de l'URL en encodant les espaces si besoin
+URL="${BASE_URL}?q=${CITY// /%20}&appid=${API_KEY}&units=${UNITS}"
+
+# --- Récupération des données ---
 response=$(curl -s "$URL")
+if [ -z "$response" ]; then
+    echo "Erreur: aucune réponse de OpenWeatherMap."
+    exit 1
+fi
 
-# Vérifier si la réponse contient une erreur
-if [[ $(echo "$response" | jq -r '.cod') != "200" ]]; then
-  echo "Erreur dans la récupération des données météo pour $CITY. Réponse : $response"
-  exit 1
+# Extraction des champs avec des regex Perl via grep -oP
+temp=$(echo "$response" | grep -oP '"temp":\s*\K[0-9.]+')
+feels_like=$(echo "$response" | grep -oP '"feels_like":\s*\K[0-9.]+')
+humidity=$(echo "$response" | grep -oP '"humidity":\s*\K[0-9.]+')
+pressure=$(echo "$response" | grep -oP '"pressure":\s*\K[0-9.]+')
+wind_speed=$(echo "$response" | grep -oP '"speed":\s*\K[0-9.]+')
+weather_desc=$(echo "$response" | grep -oP '"description":\s*"\K[^"]+')
+temp_max=$(echo "$response" | grep -oP '"temp_max":\s*\K[0-9.]+')
+temp_min=$(echo "$response" | grep -oP '"temp_min":\s*\K[0-9.]+')
+
+# Remplacement des champs vides par "N/A" si nécessaire
+[ -z "$temp" ] && temp="N/A"
+[ -z "$feels_like" ] && feels_like="N/A"
+[ -z "$humidity" ] && humidity="N/A"
+[ -z "$pressure" ] && pressure="N/A"
+[ -z "$wind_speed" ] && wind_speed="N/A"
+[ -z "$weather_desc" ] && weather_desc="N/A"
+[ -z "$temp_max" ] && temp_max="N/A"
+[ -z "$temp_min" ] && temp_min="N/A"
+
+# Horodatage en format ISO (UTC)
+timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# --- Stockage des données ---
+DATA_FILE="weather_data.txt"
+
+# Création du fichier CSV avec en-tête s'il n'existe pas
+if [ ! -f "$DATA_FILE" ]; then
+    echo "city,timestamp,temp,feels_like,humidity,pressure,wind_speed,weather_desc,temp_max,temp_min" > "$DATA_FILE"
+fi
+
+# Ajout de la nouvelle ligne de données (format CSV)
+echo "${CITY},${timestamp},${temp},${feels_like},${humidity},${pressure},${wind_speed},${weather_desc},${temp_max},${temp_min}" >> "$DATA_FILE"
+echo "Données ajoutées pour ${CITY} à ${timestamp}"
+
+# --- Génération du rapport quotidien (si mode daily) ---
+if [ "$mode" == "daily" ]; then
+    REPORT_FILE="daily_report.txt"
+    current_date=$(date -u +"%Y-%m-%d")
+    
+    # Filtrer les données du jour pour la ville spécifiée (en ignorant l'en-tête)
+    daily_data=$(awk -F',' -v date="$current_date" -v city="$CITY" 'NR>1 && index($2, date)==1 && $1==city {print}' "$DATA_FILE")
+    
+    if [ -z "$daily_data" ]; then
+        echo "Aucune donnée pour le jour ${current_date} pour ${CITY}."
+        exit 0
+    fi
+
+    # Calcul des métriques en utilisant la colonne 3 (température actuelle)
+    open_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {print $3; exit}')
+    close_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {val=$3} END{print (val=="")?"N/A":val}')
+    min_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 < min) {min=$3; found=1} } END{if(found==1) print min; else print "N/A"}')
+    max_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 > max) {max=$3; found=1} } END{if(found==1) print max; else print "N/A"}')
+    avg_temp=$(echo "$daily_data" | awk -F',' '$3 != "" {sum+=$3; count++} END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
+    avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" {sum+=$5; count++} END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
+    
+    {
+        echo "Rapport quotidien pour ${CITY} le ${current_date}:"
+        echo "Température d'ouverture: ${open_temp} °C"
+        echo "Température de clôture: ${close_temp} °C"
+        echo "Température minimale: ${min_temp} °C"
+        echo "Température maximale: ${max_temp} °C"
+        echo "Température moyenne: ${avg_temp} °C"
+        echo "Humidité moyenne: ${avg_humidity} %"
+    } > "$REPORT_FILE"
+    
+    echo "Rapport quotidien généré dans ${REPORT_FILE}"
 fi
 
 
-echo "Données récupérées avec succès"
-
-# Extraire les informations nécessaires avec jq
-temp=$(echo $response | jq '.main.temp')
-feels_like=$(echo $response | jq '.main.feels_like')
-humidity=$(echo $response | jq '.main.humidity')
-pressure=$(echo $response | jq '.main.pressure')
-wind_speed=$(echo $response | jq '.wind.speed')
-weather_desc=$(echo $response | jq -r '.weather[0].description')
-temp_max=$(echo $response | jq '.main.temp_max')
-temp_min=$(echo $response | jq '.main.temp_min')
-
-# Vérifier si le fichier weather_data.txt existe, sinon le créer
-if [ ! -f weather_data.txt ]; then
-  echo "Le fichier weather_data.txt n'existe pas. Création du fichier."
-  touch weather_data.txt
-else
-  echo "Le fichier weather_data.txt existe déjà."
-fi
-
-# Vider le fichier weather_data.txt avant d'écrire les nouvelles données
-echo "Vider le fichier weather_data.txt avant d'ajouter les nouvelles données"
-> weather_data.txt
-
-
-# Stocker les informations dans un fichier texte
-echo "$CITY, $temp, $feels_like, $humidity, $pressure, $wind_speed, $weather_desc, $temp_max, $temp_min" >> weather_data.txt
-echo "Données ajoutées à weather_data.txt"
-
-# Vérification des données avant d'écrire
-echo "temp_max = $temp_max, temp_min = $temp_min"
-
-# Ajouter la date et l'heure au fichier de données
-echo "Job exécuté pour $CITY à : $(date)" >> weather_data.txt
-echo "Date et heure ajoutées à weather_data.txt"
-
-# Vérifier si le fichier daily_report.txt existe, sinon le créer
-if [ ! -f daily_report.txt ]; then
-  echo "Le fichier daily_report.txt n'existe pas. Création du fichier."
-  touch daily_report.txt
-else
-  echo "Le fichier daily_report.txt existe déjà."
-fi
-
-# Vider le fichier daily_report.txt avant d'ajouter les nouvelles données
-echo "Vider le fichier daily_report.txt avant d'ajouter les nouvelles données"
-> daily_report.txt
-
-# Calcul de l'humidité moyenne
-avg_humidity=$(awk -F',' '{sum+=$3} END {print sum/NR}' weather_data.txt)
-
-
-# Stocker ces informations dans un fichier de rapport
-echo "Max Temp: $temp_max" >> daily_report.txt
-echo "Min Temp: $temp_min" >> daily_report.txt
-echo "Average Humidity: $avg_humidity%" >> daily_report.txt
-
-#Message de confirmation
-echo "Rapport quotidien créé dans daily_report.txt"
