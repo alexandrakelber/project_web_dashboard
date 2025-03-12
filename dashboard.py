@@ -6,7 +6,6 @@ from dash.dependencies import Input, Output
 import os
 
 # --- Fonctions de chargement des données ---
-
 def load_data(city="London"):
     DATA_FILE = 'weather_data.txt'
     if not os.path.exists(DATA_FILE):
@@ -19,13 +18,15 @@ def load_data(city="London"):
     # Filtrer sur la ville demandée
     return data[data["city"] == city]
 
-def load_daily_report():
-    REPORT_FILE = 'daily_report.txt'
+def load_daily_report(city="London"):
+    # Remplacer les espaces par des underscores pour le nom du fichier
+    city_underscore = city.replace(" ", "_")
+    REPORT_FILE = f"daily_report_{city_underscore}.txt"
     if os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, 'r') as file:
             return file.read()
     else:
-        return "Aucun rapport quotidien disponible."
+        return f"Aucun rapport quotidien disponible pour {city}."
 
 # --- Fonction de création du graphique ---
 def create_figure(city="London"):
@@ -104,15 +105,13 @@ app.layout = html.Div(
      Input('city-dropdown', 'value')]
 )
 def update_dashboard(n_intervals, city):
-    # 1) Charger les données de la ville sélectionnée
     data = load_data(city)
     
-    # 2) Construire la zone d'info
     if data.empty:
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
     else:
-        latest = data.iloc[-1]  # Dernière ligne
+        latest = data.iloc[-1]  # Dernière ligne de données
         info = html.Div([
             html.P(f"Température: {latest['temp']} °C", style={'fontSize': '20px', 'color': 'blue'}),
             html.P(f"Ressenti: {latest['feels_like']} °C"),
@@ -124,8 +123,7 @@ def update_dashboard(n_intervals, city):
         ])
         fig = create_figure(city)
     
-    # 3) Charger le rapport quotidien
-    daily_report = load_daily_report()
+    daily_report = load_daily_report(city)
     
     return info, fig, html.Pre(daily_report)
 
