@@ -14,7 +14,7 @@ fi
 
 # --- Paramètres ---
 CITY="${1:-London}"                         # Ville par défaut : London si non spécifiée
-API_KEY="e3de4a3649f43d096433bbcd70d28644"    # Remplace par ta clé API OpenWeatherMap
+API_KEY="e3de4a3649f43d096433bbcd70d28644"    
 BASE_URL="https://api.openweathermap.org/data/2.5/weather"
 UNITS="metric"                              # Pour avoir les températures en °C
 
@@ -66,12 +66,12 @@ if [ "$mode" == "daily" ]; then
     city_underscore="${CITY// /_}"
     REPORT_FILE="daily_report_${city_underscore}.txt"
     current_date=$(date -u +"%Y-%m-%d")
-    
+   
     # Filtrer les données du jour pour la ville spécifiée
     daily_data=$(awk -F',' -v date="$current_date" -v city="$CITY" '
         NR>1 && index($2, date)==1 && $1==city {print}
     ' "$DATA_FILE")
-    
+   
     if [ -z "$daily_data" ]; then
         echo "Aucune donnée pour le jour ${current_date} pour ${CITY}."
         exit 0
@@ -83,7 +83,7 @@ if [ "$mode" == "daily" ]; then
     max_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 > max) {max=$3; found=1} } END{if(found==1) print max; else print "N/A"}')
     avg_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { sum+=$3; count++ } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
     avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" { sum+=$5; count++ } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
-    
+   
     {
         echo "Rapport quotidien pour ${CITY} le ${current_date}:"
         echo "Température d'ouverture: ${open_temp} °C"
@@ -93,7 +93,7 @@ if [ "$mode" == "daily" ]; then
         echo "Température moyenne: ${avg_temp} °C"
         echo "Humidité moyenne: ${avg_humidity} %"
     } > "$REPORT_FILE"
-    
+   
     echo "Rapport quotidien généré dans ${REPORT_FILE}"
 fi
 
