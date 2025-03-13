@@ -58,7 +58,7 @@ app.layout = html.Div(
     style={'maxWidth': '800px', 'margin': '0 auto'},
     children=[
         html.H1("Dashboard Météo"),
-        
+       
         # Sélecteur de ville
         dcc.Dropdown(
             id='city-dropdown',
@@ -70,23 +70,23 @@ app.layout = html.Div(
             value='London',
             clearable=False,
         ),
-        
+       
         # Spinner pendant le chargement
         dcc.Loading(
             id="loading-data",
             type="default",
             children=html.Div(id="data-display", style={'margin': '20px 0'})
         ),
-        
+       
         # Graphique de la température
         dcc.Graph(id='temp-graph'),
-        
+       
         # Affichage du rapport quotidien
         html.Div([
             html.H3("Rapport Quotidien"),
             html.Div(id='daily-report')
         ], style={'marginTop': '20px'}),
-        
+       
         # Interval de rafraîchissement (toutes les 5 minutes)
         dcc.Interval(
             id='interval-component',
@@ -106,7 +106,7 @@ app.layout = html.Div(
 )
 def update_dashboard(n_intervals, city):
     data = load_data(city)
-    
+   
     if data.empty:
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
@@ -122,11 +122,12 @@ def update_dashboard(n_intervals, city):
             html.P(f"Horodatage: {latest['timestamp']}")
         ])
         fig = create_figure(city)
-    
+   
     daily_report = load_daily_report(city)
-    
+   
     return info, fig, html.Pre(daily_report)
 
 if __name__ == '__main__':
     print("Lancement du serveur Dash...")
     app.run_server(debug=True, host='0.0.0.0', port=8056)
+
