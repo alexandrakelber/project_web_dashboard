@@ -52,13 +52,15 @@ temp_min=$(echo "$response" | grep -oP '"temp_min":\s*\K[0-9.]+')
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # --- Stockage des données ---
-DATA_FILE="weather_data.txt"
+DATA_FILE="/home/ubuntu/project_web_dashboard/weather_data.txt"
+
+# Créer le fichier s’il n’existe pas
 if [ ! -f "$DATA_FILE" ]; then
     echo "city,timestamp,temp,feels_like,humidity,pressure,wind_speed,weather_desc,temp_max,temp_min" > "$DATA_FILE"
 fi
 
-echo "${CITY},${timestamp},${temp},${feels_like},${humidity},${pressure},${wind_speed},${weather_desc},${temp_max},${temp_min}" >> "$DATA_FILE"
-echo "Données ajoutées pour ${CITY} à ${timestamp}"
+# Écrire une ligne complète (exemple avec tes variables récupérées via API)
+echo "$CITY,$timestamp,$temp,$feels_like,$humidity,$pressure,$wind_speed,$weather_desc,$temp_max,$temp_min" >> "$DATA_FILE"
 
 # --- Génération du rapport quotidien (si mode daily) ---
 if [ "$mode" == "daily" ]; then
