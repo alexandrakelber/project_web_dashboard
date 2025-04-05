@@ -129,5 +129,5 @@ def update_dashboard(n_intervals, city):
 
 if __name__ == '__main__':
     print("Lancement du serveur Dash...")
-    app.run_server(debug=True, host='0.0.0.0', port=8056)
+    app.run(debug=True, host='0.0.0.0', port=8056)
 
