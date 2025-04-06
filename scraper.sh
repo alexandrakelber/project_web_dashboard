@@ -37,12 +37,8 @@ wind_speed=$(echo "$response" | grep -oP '"speed":\s*\K[0-9.]+')
 weather_desc=$(echo "$response" | grep -oP '"description":\s*"\K[^"]+')
 temp_max=$(echo "$response" | grep -oP '"temp_max":\s*\K[0-9.]+')
 temp_min=$(echo "$response" | grep -oP '"temp_min":\s*\K[0-9.]+')
-sunrise=$(echo "$response" | grep -oP '"sunrise":\s*\K[0-9]+')
-sunset=$(echo "$response" | grep -oP '"sunset":\s*\K[0-9]+')
 
 
-sunrise_time=$(date -d @$sunrise +"%Y-%m-%d %H:%M:%S")
-sunset_time=$(date -d @$sunset +"%Y-%m-%d %H:%M:%S")
 
 # Remplacement des champs vides par "N/A" si nécessaire
 [ -z "$temp" ] && temp="N/A"
@@ -54,6 +50,7 @@ sunset_time=$(date -d @$sunset +"%Y-%m-%d %H:%M:%S")
 [ -z "$temp_max" ] && temp_max="N/A"
 [ -z "$temp_min" ] && temp_min="N/A"
 
+
 # Horodatage en format ISO (UTC)
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -62,11 +59,11 @@ DATA_FILE="/home/ubuntu/project_web_dashboard/weather_data.txt"
 
 # Créer le fichier s’il n’existe pas
 if [ ! -f "$DATA_FILE" ]; then
-    echo "city,timestamp,temp,feels_like,humidity,pressure,wind_speed,weather_desc,temp_max,temp_min,sunrise,sunset" > "$DATA_FILE"
+    echo "city,timestamp,temp,feels_like,humidity,pressure,wind_speed,weather_desc,temp_max,temp_min" > "$DATA_FILE"
 fi
 
 # Écrire une ligne complète (exemple avec tes variables récupérées via API)
-echo "$CITY,$timestamp,$temp,$feels_like,$humidity,$pressure,$wind_speed,$weather_desc,$temp_max,$temp_min,$sunrise_time,$sunset_time" >> "$DATA_FILE"
+echo "$CITY,$timestamp,$temp,$feels_like,$humidity,$pressure,$wind_speed,$weather_desc,$temp_max,$temp_min" >> "$DATA_FILE"
 
 # --- Génération du rapport quotidien (si mode daily) ---
 if [ "$mode" == "daily" ]; then
@@ -91,7 +88,7 @@ if [ "$mode" == "daily" ]; then
     max_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { if(found==0 || $3 > max) {max=$3; found=1} } END{if(found==1) print max; else print "N/A"}')
     avg_temp=$(echo "$daily_data" | awk -F',' '$3 != "" { sum+=$3; count++ } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
     avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" { sum+=$5; count++ } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
-   
+
     {
         echo "Rapport quotidien pour ${CITY} le ${current_date}:"
         echo "Température d'ouverture: ${open_temp} °C"
@@ -100,10 +97,8 @@ if [ "$mode" == "daily" ]; then
         echo "Température maximale: ${max_temp} °C"
         echo "Température moyenne: ${avg_temp} °C"
         echo "Humidité moyenne: ${avg_humidity} %"
-        echo "Lever du soleil: ${sunrise_time}"
-        echo "Coucher du soleil: ${sunset_time}"
     } > "$REPORT_FILE"
-   
+
     echo "Rapport quotidien généré dans ${REPORT_FILE}"
 fi
 
