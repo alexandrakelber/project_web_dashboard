@@ -25,7 +25,13 @@ def convert_to_local_time(timestamp, city):
 
     return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
-
+# Check if the CSV is being read correctly
+try:
+    data = pd.read_csv('weather_data.txt')
+    print("Data loaded successfully:")
+    print(data.head())  # Print the first 5 rows to inspect the data
+except Exception as e:
+    print(f"Error loading file: {e}")
 
 # --- Fonctions de chargement des données ---
 def load_data(city="London"):
@@ -152,15 +158,6 @@ app.layout = html.Div(
                     children=[html.P(id="current-weather-desc", style={'fontSize': '18px', 'color': '#2c3e50'})],
                     style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
                 ),
- 
-               html.Div(
-                    children=[html.P(id="current-sunrise", style={'fontSize': '18px', 'color': '#2c3e50'})],
-                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)'}
-                ),
-                html.Div(
-                    children=[html.P(id="current-sunset", style={'fontSize': '18px', 'color': '#2c3e50'})],
-                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)'}
-                ),
             ],
             style={'padding': '20px'}
         ),
@@ -216,9 +213,7 @@ app.layout = html.Div(
      Output('current-humidity', 'children'),
      Output('current-pressure', 'children'),
      Output('current-wind-speed', 'children'),
-     Output('current-weather-desc', 'children'),
-     Output('current-sunrise', 'children'),
-     Output('current-sunset', 'children')],
+     Output('current-weather-desc', 'children')],
     [Input('city-dropdown', 'value')]
 )
 def update_weather(city):
@@ -230,8 +225,6 @@ def update_weather(city):
     latest = data.iloc[-1]  # Get the latest weather data
     latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
 
-    sunrise = latest['sunrise']
-    sunset = latest['sunset']
     current_temp = f"{latest['temp']} °C"
     current_time = f"{latest['timestamp']}"
     current_feels_like = f"🌡️ Ressenti: {latest['feels_like']} °C"
@@ -240,10 +233,7 @@ def update_weather(city):
     current_wind_speed = f"🌬️ Vitesse du vent: {latest['wind_speed']} m/s"
     current_weather_desc = f"🌦️ Météo: {latest['weather_desc']}"
 
-    sunrise_time = f"🌅 Lever du soleil: {sunrise}"
-    sunset_time = f"🌇 Coucher du soleil: {sunset}"
-
-    return current_temp, current_time, current_feels_like, current_humidity, current_pressure, current_wind_speed, current_weather_desc, sunrise_time, sunset_time
+    return current_temp, current_time, current_feels_like, current_humidity, current_pressure, current_wind_speed, current_weather_desc
 
 # --- Callback pour mettre à jour le dashboard ---
 @app.callback(
@@ -254,7 +244,7 @@ def update_weather(city):
 )
 def update_dashboard(n_intervals, city):
     data = load_data(city)
-   
+
     if data.empty:
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
@@ -262,13 +252,13 @@ def update_dashboard(n_intervals, city):
         latest = data.iloc[-1]
         # Convert timestamp to local time
         latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
-        
+
         # Create the weather info
 
         fig = create_figure(city)
-   
+
     daily_report = load_daily_report(city)
-   
+
     return fig, html.Pre(daily_report)
 
 if __name__ == '__main__':
