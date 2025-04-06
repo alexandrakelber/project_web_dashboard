@@ -74,7 +74,7 @@ def create_figure(city="London"):
     return fig
 
 # --- Création de l'application Dash ---
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=['/assets/styles.css'])
 
 app.layout = html.Div(
     style={'maxWidth': '800px', 'margin': '0 auto'},
