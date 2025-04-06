@@ -1,7 +1,7 @@
-Rapport quotidien pour London le 2025-03-12:
-Température d'ouverture: 7.34 °C
-Température de clôture: 4.61 °C
-Température minimale: 4.61 °C
-Température maximale: 7.34 °C
-Température moyenne: 5.97 °C
-Humidité moyenne: 71.00 %
+Rapport quotidien pour London:
+Température d'ouverture: 15.03 °C
+Température de clôture: 9.38 °C
+Température minimale: 9.38 °C
+Température maximale: 15.31 °C
+Température moyenne: 12.39 °C
+Humidité moyenne: 43.07 %
