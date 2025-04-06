@@ -50,6 +50,23 @@ temp_min=$(echo "$response" | grep -oP '"temp_min":\s*\K[0-9.]+')
 [ -z "$temp_max" ] && temp_max="N/A"
 [ -z "$temp_min" ] && temp_min="N/A"
 
+get_city_timezone() {
+    case $1 in
+        "London")
+            echo "Europe/London"
+            ;;
+        "Paris")
+            echo "Europe/Paris"
+            ;;
+        "New York")
+            echo "America/New_York"
+            ;;
+        *)
+            echo "UTC"
+            ;;
+    esac
+}
+
 
 # Horodatage en format ISO (UTC)
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -66,17 +83,18 @@ fi
 echo "$CITY,$timestamp,$temp,$feels_like,$humidity,$pressure,$wind_speed,$weather_desc,$temp_max,$temp_min" >> "$DATA_FILE"
 
 # --- Génération du rapport quotidien (si mode daily) ---
+
 if [ "$mode" == "daily" ]; then
     # Remplacer les espaces dans CITY par des underscores (ex: "New York" -> "New_York")
     city_underscore="${CITY// /_}"
     REPORT_FILE="daily_report_${city_underscore}.txt"
-    current_date=$(date -u +"%Y-%m-%d")
-   
+    current_date=$(TZ=$(get_city_timezone "$CITY") date +"%Y-%m-%d")
+
     # Filtrer les données du jour pour la ville spécifiée
     daily_data=$(awk -F',' -v date="$current_date" -v city="$CITY" '
         NR>1 && index($2, date)==1 && $1==city {print}
     ' "$DATA_FILE")
-   
+
     if [ -z "$daily_data" ]; then
         echo "Aucune donnée pour le jour ${current_date} pour ${CITY}."
         exit 0
