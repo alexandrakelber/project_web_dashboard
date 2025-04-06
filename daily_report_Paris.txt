@@ -1,7 +1,7 @@
-Rapport quotidien pour Paris le 2025-03-12:
-Température d'ouverture: 7.77 °C
-Température de clôture: 6.47 °C
-Température minimale: 6.47 °C
-Température maximale: 7.77 °C
-Température moyenne: 7.29 °C
-Humidité moyenne: 67.33 %
+Rapport quotidien pour Paris:
+Température d'ouverture: 17.67 °C
+Température de clôture: 14.95 °C
+Température minimale: 14.95 °C
+Température maximale: 19.08 °C
+Température moyenne: 17.63 °C
+Humidité moyenne: 30.24 %
