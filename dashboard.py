@@ -76,52 +76,178 @@ def create_figure(city="London"):
 # --- Création de l'application Dash ---
 app = dash.Dash(__name__, external_stylesheets=['/assets/styles.css'])
 
+
 app.layout = html.Div(
     style={'maxWidth': '800px', 'margin': '0 auto'},
     children=[
-        html.H1("Dashboard Météo"),
-       
-        # Sélecteur de ville
-        dcc.Dropdown(
-            id='city-dropdown',
-            options=[
-                {'label': 'London', 'value': 'London'},
-                {'label': 'New York', 'value': 'New York'},
-                {'label': 'Paris', 'value': 'Paris'},
+        # Header
+        html.Div(
+            children=[
+                html.H1("Dashboard Météo", style={'fontSize': '36px', 'textAlign': 'center', 'fontWeight': 'bold'}),
+                html.P("Alexandra Kelber & Linn Juge", style={'textAlign': 'center', 'fontSize': '1rem', 'color': '#2c3e50'}),
+                html.P("IF3", style={'textAlign': 'center', 'fontSize': '1rem', 'color': '#2c3e50'})
             ],
-            value='London',
-            clearable=False,
+            style={
+                'padding': '20px', 
+                'backgroundColor': '#f8f9fa', 
+                'borderBottom': '1px solid #dcdcdc',
+                'marginBottom': '40px'
+            }
         ),
-       
+
+        # Sélecteur de ville
+        html.Div(
+            children=[
+                dcc.Dropdown(
+                    id='city-dropdown',
+                    options=[
+                        {'label': 'London', 'value': 'London'},
+                        {'label': 'New York', 'value': 'New York'},
+                        {'label': 'Paris', 'value': 'Paris'},
+                    ],
+                    value='London',
+                    clearable=False,
+                    style={'fontSize': '28px', 'padding': '10px'}
+                )
+            ],
+            style={
+                'padding': '20px', 
+                'backgroundColor': '#ffffff', 
+                'borderRadius': '10px', 
+                'marginBottom': '30px',
+                'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)' 
+            }
+        ),
+
+        # Weather Section (Temperature and Time side by side)
+        html.Div(
+            children=[
+                html.H2(id='current-temperature', style={'fontSize': '2rem', 'color': 'blue', 'marginBottom': '10px'}),
+                html.P(id='current-time', style={'fontSize': '1.5rem', 'color': '#888'})
+            ],
+            style={'textAlign': 'center', 'marginBottom': '40px'}
+        ),
+
+
+        # Rest of the information in styled cards
+        html.Div(
+            children=[
+                html.Div(
+                    children=[html.P(id="current-feels-like", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
+                ),
+                html.Div(
+                    children=[html.P(id="current-humidity", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
+                ),
+                html.Div(
+                    children=[html.P(id="current-pressure", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
+                ),
+                html.Div(
+                    children=[html.P(id="current-wind-speed", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
+                ),
+                html.Div(
+                    children=[html.P(id="current-weather-desc", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
+                ),
+ 
+               html.Div(
+                    children=[html.P(id="current-sunrise", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)'}
+                ),
+                html.Div(
+                    children=[html.P(id="current-sunset", style={'fontSize': '18px', 'color': '#2c3e50'})],
+                    style={'padding': '10px', 'backgroundColor': '#ffffff', 'borderRadius': '10px', 'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)'}
+                ),
+            ],
+            style={'padding': '20px'}
+        ),
+
         # Spinner pendant le chargement
         dcc.Loading(
             id="loading-data",
             type="default",
             children=html.Div(id="data-display", style={'margin': '20px 0'})
         ),
-       
+
         # Graphique de la température
-        dcc.Graph(id='temp-graph'),
-       
+        html.Div(
+            children=[
+                dcc.Graph(id='temp-graph')
+            ],
+            style={
+                'backgroundColor': '#ffffff',
+                'borderRadius': '10px',
+                'padding': '20px',
+                'marginBottom': '30px'
+            }
+        ),
+
         # Affichage du rapport quotidien
-        html.Div([
-            html.H3("Rapport Quotidien"),
-            html.Div(id='daily-report')
-        ], style={'marginTop': '20px'}),
-       
+        html.Div(
+            children=[
+                html.H3("Rapport Quotidien", style={'fontSize': '28px', 'fontWeight': 'bold', 'fontFamily': 'Georgia, serif'}),
+                html.Div(id='daily-report')
+            ],
+            style={
+                'backgroundColor': '#ffffff', 
+                'borderRadius': '10px', 
+                'padding': '20px',
+                'marginBottom': '30px',
+                'boxShadow': '0px 4px 8px rgba(0, 0, 0, 0.1)' 
+            }
+        ),
+
         # Interval de rafraîchissement (toutes les 5 minutes)
         dcc.Interval(
             id='interval-component',
-            interval=5*60*1000,
+            interval=5*60*1000,  # Rafraîchissement toutes les 5 minutes
             n_intervals=0
         )
     ]
 )
 
+@app.callback(
+    [Output('current-temperature', 'children'),
+     Output('current-time', 'children'),
+     Output('current-feels-like', 'children'),
+     Output('current-humidity', 'children'),
+     Output('current-pressure', 'children'),
+     Output('current-wind-speed', 'children'),
+     Output('current-weather-desc', 'children'),
+     Output('current-sunrise', 'children'),
+     Output('current-sunset', 'children')],
+    [Input('city-dropdown', 'value')]
+)
+def update_weather(city):
+    data = load_data(city)  # Ensure load_data fetches the correct data
+
+    if data.empty:
+        return ['Data not available'] * 7  # Provide fallback data if empty
+
+    latest = data.iloc[-1]  # Get the latest weather data
+    latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
+
+    sunrise = latest['sunrise']
+    sunset = latest['sunset']
+    current_temp = f"{latest['temp']} °C"
+    current_time = f"{latest['timestamp']}"
+    current_feels_like = f"🌡️ Ressenti: {latest['feels_like']} °C"
+    current_humidity = f"💧 Humidité: {latest['humidity']} %"
+    current_pressure = f"⚖️ Pression: {latest['pressure']} hPa"
+    current_wind_speed = f"🌬️ Vitesse du vent: {latest['wind_speed']} m/s"
+    current_weather_desc = f"🌦️ Météo: {latest['weather_desc']}"
+
+    sunrise_time = f"🌅 Lever du soleil: {sunrise}"
+    sunset_time = f"🌇 Coucher du soleil: {sunset}"
+
+    return current_temp, current_time, current_feels_like, current_humidity, current_pressure, current_wind_speed, current_weather_desc, sunrise_time, sunset_time
+
 # --- Callback pour mettre à jour le dashboard ---
 @app.callback(
-    [Output('data-display', 'children'),
-     Output('temp-graph', 'figure'),
+    [Output('temp-graph', 'figure'),
      Output('daily-report', 'children')],
     [Input('interval-component', 'n_intervals'),
      Input('city-dropdown', 'value')]
@@ -133,22 +259,17 @@ def update_dashboard(n_intervals, city):
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
     else:
-        latest = data.iloc[-1]  # Dernière ligne de données
+        latest = data.iloc[-1]
+        # Convert timestamp to local time
         latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
-        info = html.Div([
-            html.P(f"Température: {latest['temp']} °C", style={'fontSize': '20px', 'color': 'blue'}),
-            html.P(f"Ressenti: {latest['feels_like']} °C"),
-            html.P(f"Humidité: {latest['humidity']} %"),
-            html.P(f"Pression: {latest['pressure']} hPa"),
-            html.P(f"Vitesse du vent: {latest['wind_speed']} m/s"),
-            html.P(f"Météo: {latest['weather_desc']}"),
-            html.P(f"Heure locale: {latest['timestamp']}")
-        ])
+        
+        # Create the weather info
+
         fig = create_figure(city)
    
     daily_report = load_daily_report(city)
    
-    return info, fig, html.Pre(daily_report)
+    return fig, html.Pre(daily_report)
 
 if __name__ == '__main__':
     print("Lancement du serveur Dash...")
