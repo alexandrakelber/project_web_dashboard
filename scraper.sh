@@ -90,7 +90,7 @@ if [ "$mode" == "daily" ]; then
     avg_humidity=$(echo "$daily_data" | awk -F',' '$5 != "" { sum+=$5; count++ } END{if(count>0) printf "%.2f", sum/count; else print "N/A"}')
 
     {
-        echo "Rapport quotidien pour ${CITY} le ${current_date}:"
+        echo "Rapport quotidien pour ${CITY}:"
         echo "Température d'ouverture: ${open_temp} °C"
         echo "Température de clôture: ${close_temp} °C"
         echo "Température minimale: ${min_temp} °C"
