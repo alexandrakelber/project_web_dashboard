@@ -2,7 +2,7 @@ import dash
 from dash import dcc, html
 import pandas as pd
 import plotly.express as px
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import os
 import pytz
 from datetime import datetime
@@ -43,6 +43,7 @@ def load_data(city="London"):
     except Exception as e:
         print(f"Erreur lors de la lecture du fichier: {e}")
         return pd.DataFrame()
+
     # Filtrer sur la ville demandée
     return data[data["city"] == city]
 
@@ -249,12 +250,8 @@ def update_dashboard(n_intervals, city):
         info = html.P("Aucune donnée disponible pour le moment.", style={'color': 'red'})
         fig = create_figure(city)
     else:
-        latest = data.iloc[-1]
-        # Convert timestamp to local time
+        latest = data.iloc[-1]  # Get the latest weather data
         latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
-
-        # Create the weather info
-
         fig = create_figure(city)
 
     daily_report = load_daily_report(city)
