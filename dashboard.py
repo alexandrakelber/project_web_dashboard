@@ -4,6 +4,28 @@ import pandas as pd
 import plotly.express as px
 from dash.dependencies import Input, Output
 import os
+import pytz
+from datetime import datetime
+
+def convert_to_local_time(timestamp, city):
+    timezones = {
+        "London": "Europe/London",
+        "Paris": "Europe/Paris",
+        "New York": "America/New_York"
+    }
+
+    tz = pytz.timezone(timezones.get(city, "UTC"))
+
+    # Check if timestamp is already a datetime object, if it's an integer (Unix timestamp), convert it to datetime
+    if isinstance(timestamp, int):
+        timestamp = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.utc)
+
+    # Convert timestamp to local time zone
+    local_time = timestamp.astimezone(tz)
+
+    return local_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
 
 # --- Fonctions de chargement des données ---
 def load_data(city="London"):
@@ -112,6 +134,7 @@ def update_dashboard(n_intervals, city):
         fig = create_figure(city)
     else:
         latest = data.iloc[-1]  # Dernière ligne de données
+        latest['timestamp'] = convert_to_local_time(latest['timestamp'], city)
         info = html.Div([
             html.P(f"Température: {latest['temp']} °C", style={'fontSize': '20px', 'color': 'blue'}),
             html.P(f"Ressenti: {latest['feels_like']} °C"),
@@ -119,7 +142,7 @@ def update_dashboard(n_intervals, city):
             html.P(f"Pression: {latest['pressure']} hPa"),
             html.P(f"Vitesse du vent: {latest['wind_speed']} m/s"),
             html.P(f"Météo: {latest['weather_desc']}"),
-            html.P(f"Horodatage: {latest['timestamp']}")
+            html.P(f"Heure locale: {latest['timestamp']}")
         ])
         fig = create_figure(city)
    
